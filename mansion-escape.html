@@ -178,6 +178,7 @@
         let player = null;
         let map = [];
         let lightRadius = 150;
+        let enemyVisionRadius = 170;
 
         const FLOORS = [
             { name: "ATTIC", difficulty: 1 },
@@ -281,7 +282,7 @@
                     return;
                 }
 
-                if (dist < 300) { // Detection range
+                if (dist < enemyVisionRadius) { // Detection range
                     this.x += (dx / dist) * this.speed;
                     this.y += (dy / dist) * this.speed;
                 }
