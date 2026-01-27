@@ -308,6 +308,28 @@
             }
         }
 
+        class GhostEnemy extends Enemy {
+            constructor(x, y, speed) {
+                super(x, y, speed);
+                this.color = '#aa0000'; // Different color for distinction
+            }
+
+            draw() {
+                // Only visible within lightRadius
+                if (!player) return;
+                const playerPos = player.getCenter();
+                const center = this.getCenter();
+                const dist = Math.sqrt((center.x - playerPos.x) ** 2 + (center.y - playerPos.y) ** 2);
+
+                if (dist <= lightRadius) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.25;
+                    super.draw();
+                    ctx.restore();
+                }
+            }
+        }
+
         function generateMap(floorIndex) {
             const newMap = [];
             for (let y = 0; y < GRID_HEIGHT; y++) {
@@ -349,7 +371,13 @@
             player.keys = 0;
 
             enemies = [];
-            enemies.push(new Enemy(GRID_WIDTH - 5, 5, 1.2 + floorIndex * 0.2));
+
+            if (floorIndex === 0) {
+                enemies.push(new Enemy(GRID_WIDTH - 5, 5, 1.2 + floorIndex * 0.2));
+            } else {
+                // Starting Level 2 (index 1), only Ghost Enemy appears
+                enemies.push(new GhostEnemy(GRID_WIDTH - 5, 5, 1.2 + floorIndex * 0.2));
+            }
 
             items = [];
             // Random Keys
