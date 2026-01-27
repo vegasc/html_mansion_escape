@@ -211,6 +211,29 @@
             getCenter() {
                 return { x: this.x + TILE_SIZE / 2, y: this.y + TILE_SIZE / 2 };
             }
+
+            checkWallCollision(newX, newY) {
+                const margin = 5;
+                const corners = [
+                    { x: newX + margin, y: newY + margin },
+                    { x: newX + TILE_SIZE - margin, y: newY + margin },
+                    { x: newX + margin, y: newY + TILE_SIZE - margin },
+                    { x: newX + TILE_SIZE - margin, y: newY + TILE_SIZE - margin }
+                ];
+
+                for (let corner of corners) {
+                    const tx = Math.floor(corner.x / TILE_SIZE);
+                    const ty = Math.floor(corner.y / TILE_SIZE);
+                    if (tx < 0 || tx >= GRID_WIDTH || ty < 0 || ty >= GRID_HEIGHT) return true;
+                    if (map[ty][tx] === 1) return true; // Wall
+                    // Entities other than player with keys are blocked by doors
+                    if (map[ty][tx] === 3) {
+                        if (this instanceof Player && this.keys > 0) return false;
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
 
         class Player extends Entity {
@@ -241,22 +264,12 @@
             }
 
             checkWallCollision(newX, newY) {
-                const margin = 5;
-                const corners = [
-                    { x: newX + margin, y: newY + margin },
-                    { x: newX + TILE_SIZE - margin, y: newY + margin },
-                    { x: newX + margin, y: newY + TILE_SIZE - margin },
-                    { x: newX + TILE_SIZE - margin, y: newY + TILE_SIZE - margin }
-                ];
-
-                for (let corner of corners) {
-                    const tx = Math.floor(corner.x / TILE_SIZE);
-                    const ty = Math.floor(corner.y / TILE_SIZE);
-                    if (tx < 0 || tx >= GRID_WIDTH || ty < 0 || ty >= GRID_HEIGHT) return true;
-                    if (map[ty][tx] === 1) return true; // Wall
-                    if (map[ty][tx] === 3 && this.keys === 0) return true; // Locked Door
-                }
-                return false;
+                // Determine collision logic specific to Player (inherits base but can override if needed, 
+                // but here we moved base logic to Entity. However, Player's key logic is now in base or we can keep it here.
+                // Let's rely on the base Entity.checkWallCollision which now handles the key check via instanceof or passing keys)
+                // Actually, to be cleaner, let's just use super or the shared method.
+                // The base method I wrote checks 'this instanceof Player'.
+                return super.checkWallCollision(newX, newY);
             }
         }
 
@@ -283,8 +296,17 @@
                 }
 
                 if (dist < enemyVisionRadius) { // Detection range
-                    this.x += (dx / dist) * this.speed;
-                    this.y += (dy / dist) * this.speed;
+                    let moveX = (dx / dist) * this.speed;
+                    let moveY = (dy / dist) * this.speed;
+
+                    // Try moving X
+                    if (!this.checkWallCollision(this.x + moveX, this.y)) {
+                        this.x += moveX;
+                    }
+                    // Try moving Y
+                    if (!this.checkWallCollision(this.x, this.y + moveY)) {
+                        this.y += moveY;
+                    }
                 }
             }
         }
