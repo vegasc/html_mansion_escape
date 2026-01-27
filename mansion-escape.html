@@ -177,6 +177,7 @@
         let items = [];
         let player = null;
         let map = [];
+        let flashLightRadius = 150;
         let lightRadius = 150;
         let enemyVisionRadius = 270;
 
@@ -388,6 +389,11 @@
                 items.push({ x: Math.floor(Math.random() * 18) + 1, y: Math.floor(Math.random() * 13) + 1, type: 'COIN' });
             }
 
+            // Flashlight (chance to spawn)
+            if (Math.random() > 0.5) {
+                items.push({ x: Math.floor(Math.random() * 18) + 1, y: Math.floor(Math.random() * 13) + 1, type: 'FLASHLIGHT' });
+            }
+
             // Hiding spots
             items.push({ x: 5, y: 5, type: 'CLOSET' });
             items.push({ x: 15, y: 10, type: 'CLOSET' });
@@ -439,6 +445,10 @@
                     ctx.beginPath();
                     ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, 6, 0, Math.PI * 2);
                     ctx.fill();
+                } else if (item.type === 'FLASHLIGHT') {
+                    ctx.font = '30px Arial';
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText('🔦', x + 10, y + 40);
                 } else if (item.type === 'CLOSET') {
                     ctx.fillStyle = COLORS.HIDING;
                     ctx.fillRect(x + 5, y + 5, TILE_SIZE - 10, TILE_SIZE - 10);
@@ -496,6 +506,8 @@
                     } else if (item.type === 'COIN') {
                         score += 100;
                         scoreEl.textContent = score;
+                    } else if (item.type === 'FLASHLIGHT') {
+                        lightRadius += flashLightRadius;
                     }
                     return false;
                 }
