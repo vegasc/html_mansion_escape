@@ -226,11 +226,8 @@
                     const ty = Math.floor(corner.y / TILE_SIZE);
                     if (tx < 0 || tx >= GRID_WIDTH || ty < 0 || ty >= GRID_HEIGHT) return true;
                     if (map[ty][tx] === 1) return true; // Wall
-                    // Entities other than player with keys are blocked by doors
-                    if (map[ty][tx] === 3) {
-                        if (this instanceof Player && this.keys > 0) return false;
-                        return true;
-                    }
+                    if (map[ty][tx] === 1) return true; // Wall
+
                 }
                 return false;
             }
@@ -337,10 +334,10 @@
             const exitY = GRID_HEIGHT - 2;
             newMap[exitY][exitX] = 4; // Exit
 
-            // Place Locked Door
-            const doorX = GRID_WIDTH - 3;
-            const doorY = GRID_HEIGHT - 2;
-            newMap[doorY][doorX] = 3; // Door
+            // Place Locked Door - REMOVED
+            // const doorX = GRID_WIDTH - 3;
+            // const doorY = GRID_HEIGHT - 2;
+            // newMap[doorY][doorX] = 3; // Door
 
             return newMap;
         }
@@ -380,11 +377,6 @@
                         ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                         ctx.strokeStyle = '#334';
                         ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                    } else if (tile === 3) {
-                        ctx.fillStyle = player.keys > 0 ? '#442' : COLORS.DOOR;
-                        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                        ctx.fillStyle = '#fff';
-                        ctx.fillText('DOOR', x * TILE_SIZE + 5, y * TILE_SIZE + 25);
                     } else if (tile === 4) {
                         ctx.fillStyle = COLORS.EXIT;
                         ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -493,7 +485,7 @@
 
             // Map triggers
             const tile = map[ty][tx];
-            if (tile === 4) { // Exit
+            if (tile === 4 && player.keys > 0) { // Exit with key
                 if (currentFloor < FLOORS.length - 1) {
                     initFloor(currentFloor + 1);
                 } else {
