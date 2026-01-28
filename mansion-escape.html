@@ -332,36 +332,86 @@
             }
         }
 
-        function generateMap(floorIndex) {
-            const newMap = [];
-            for (let y = 0; y < GRID_HEIGHT; y++) {
-                newMap[y] = [];
-                for (let x = 0; x < GRID_WIDTH; x++) {
-                    if (x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1) {
-                        newMap[y][x] = 1; // Perimeter Walls
-                    } else {
-                        newMap[y][x] = 0; // Empty Floor
+        function hasValidPath(map, startX, startY, targetX, targetY) {
+            const queue = [{ x: startX, y: startY }];
+            const visited = new Set();
+            visited.add(`${startX},${startY}`);
+
+            const directions = [
+                { x: 0, y: -1 }, // Up
+                { x: 0, y: 1 },  // Down
+                { x: -1, y: 0 }, // Left
+                { x: 1, y: 0 }   // Right
+            ];
+
+            while (queue.length > 0) {
+                const { x, y } = queue.shift();
+
+                if (x === targetX && y === targetY) {
+                    return true; // Path found
+                }
+
+                for (const dir of directions) {
+                    const nx = x + dir.x;
+                    const ny = y + dir.y;
+
+                    // Bounds check
+                    if (nx < 0 || nx >= GRID_WIDTH || ny < 0 || ny >= GRID_HEIGHT) continue;
+
+                    // Wall check & Visited check
+                    if (map[ny][nx] !== 1 && !visited.has(`${nx},${ny}`)) {
+                        visited.add(`${nx},${ny}`);
+                        queue.push({ x: nx, y: ny });
                     }
                 }
             }
+            return false; // No path found
+        }
 
-            // Simple procedurally generated obstacles (just random walls for now)
-            for (let i = 0; i < 15 + floorIndex * 5; i++) {
-                const rx = Math.floor(Math.random() * (GRID_WIDTH - 2)) + 1;
-                const ry = Math.floor(Math.random() * (GRID_HEIGHT - 2)) + 1;
-                if ((rx === 2 && ry === 2) || (rx === GRID_WIDTH - 3 && ry === GRID_HEIGHT - 3)) continue;
-                newMap[ry][rx] = 1;
-            }
+        function generateMap(floorIndex) {
+            let newMap = [];
+            let isValid = false;
+            let attempts = 0;
 
-            // Place Exit (Stairs down)
-            const exitX = GRID_WIDTH - 2;
-            const exitY = GRID_HEIGHT - 2;
-            newMap[exitY][exitX] = 4; // Exit
+            do {
+                attempts++;
+                // Initialize map with walls on perimeter
+                for (let y = 0; y < GRID_HEIGHT; y++) {
+                    newMap[y] = [];
+                    for (let x = 0; x < GRID_WIDTH; x++) {
+                        if (x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1) {
+                            newMap[y][x] = 1; // Perimeter Walls
+                        } else {
+                            newMap[y][x] = 0; // Empty Floor
+                        }
+                    }
+                }
 
-            // Place Locked Door - REMOVED
-            // const doorX = GRID_WIDTH - 3;
-            // const doorY = GRID_HEIGHT - 2;
-            // newMap[doorY][doorX] = 3; // Door
+                // Simple procedurally generated obstacles (just random walls for now)
+                for (let i = 0; i < 15 + floorIndex * 5; i++) {
+                    const rx = Math.floor(Math.random() * (GRID_WIDTH - 2)) + 1;
+                    const ry = Math.floor(Math.random() * (GRID_HEIGHT - 2)) + 1;
+                    if ((rx === 2 && ry === 2) || (rx === GRID_WIDTH - 3 && ry === GRID_HEIGHT - 3)) continue;
+                    newMap[ry][rx] = 1;
+                }
+
+                // Place Exit (Stairs down)
+                const exitX = GRID_WIDTH - 2;
+                const exitY = GRID_HEIGHT - 2;
+                newMap[exitY][exitX] = 4; // Exit
+
+                // Validate Path from Player Start (2,2) to Exit
+                if (hasValidPath(newMap, 2, 2, exitX, exitY)) {
+                    isValid = true;
+                }
+
+                // Fallback to prevent crash if somehow impossible (unlikely with this density)
+                if (attempts > 50) {
+                    console.warn("Could not generate valid map in 50 attempts. Using last attempt.");
+                    isValid = true;
+                }
+
+            } while (!isValid);
 
             return newMap;
         }
