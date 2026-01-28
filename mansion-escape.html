@@ -181,6 +181,7 @@
         let lightRadiusDefault = 150;
         let lightRadius = lightRadiusDefault;
         let enemyVisionRadius = 270;
+        let etitySpeed = 250;
 
         const FLOORS = [
             { name: "ATTIC", difficulty: 1 },
@@ -202,7 +203,7 @@
                 this.width = TILE_SIZE * 0.7;
                 this.height = TILE_SIZE * 0.7;
                 this.color = color;
-                this.speed = 3;
+                this.speed = etitySpeed;
             }
 
             draw() {
@@ -242,16 +243,18 @@
                 this.keys = 0;
             }
 
-            update() {
+            update(dt) {
                 if (this.isHiding) return;
 
                 let dx = 0;
                 let dy = 0;
 
-                if (keysPressed['KeyW'] || keysPressed['ArrowUp']) dy -= this.speed;
-                if (keysPressed['KeyS'] || keysPressed['ArrowDown']) dy += this.speed;
-                if (keysPressed['KeyA'] || keysPressed['ArrowLeft']) dx -= this.speed;
-                if (keysPressed['KeyD'] || keysPressed['ArrowRight']) dx += this.speed;
+                const moveDist = this.speed * dt;
+
+                if (keysPressed['KeyW'] || keysPressed['ArrowUp']) dy -= moveDist;
+                if (keysPressed['KeyS'] || keysPressed['ArrowDown']) dy += moveDist;
+                if (keysPressed['KeyA'] || keysPressed['ArrowLeft']) dx -= moveDist;
+                if (keysPressed['KeyD'] || keysPressed['ArrowRight']) dx += moveDist;
 
                 // Simple collision
                 if (!this.checkWallCollision(this.x + dx, this.y)) this.x += dx;
@@ -275,11 +278,10 @@
         class Enemy extends Entity {
             constructor(x, y, speed) {
                 super(x, y, COLORS.ENEMY);
-                this.speed = speed;
                 this.alertLevel = 0;
             }
 
-            update(target) {
+            update(target, dt) {
                 if (target.isHiding) {
                     // Wander randomly or return to start
                     return;
@@ -295,8 +297,9 @@
                 }
 
                 if (dist < enemyVisionRadius) { // Detection range
-                    let moveX = (dx / dist) * this.speed;
-                    let moveY = (dy / dist) * this.speed;
+                    const moveDist = this.speed * dt;
+                    let moveX = (dx / dist) * moveDist;
+                    let moveY = (dy / dist) * moveDist;
 
                     // Try moving X
                     if (!this.checkWallCollision(this.x + moveX, this.y)) {
@@ -443,17 +446,19 @@
             enemies = [];
 
             let enemyPos = getRandomEmptyTile();
+            const baseEnemySpeed = (1.2 + floorIndex * 0.2) * 60; // Scale to pixels/sec
+
             if (floorIndex === 0) {
                 // Ensure enemy is far enough from player start
                 while (Math.abs(enemyPos.x - 2) < 5 && Math.abs(enemyPos.y - 2) < 5) {
                     enemyPos = getRandomEmptyTile();
                 }
-                enemies.push(new Enemy(enemyPos.x, enemyPos.y, 1.2 + floorIndex * 0.2));
+                enemies.push(new Enemy(enemyPos.x, enemyPos.y, baseEnemySpeed));
             } else {
                 while (Math.abs(enemyPos.x - 2) < 5 && Math.abs(enemyPos.y - 2) < 5) {
                     enemyPos = getRandomEmptyTile();
                 }
-                enemies.push(new GhostEnemy(enemyPos.x, enemyPos.y, 1.2 + floorIndex * 0.2));
+                enemies.push(new GhostEnemy(enemyPos.x, enemyPos.y, baseEnemySpeed));
             }
 
             items = [];
@@ -568,11 +573,11 @@
             ctx.drawImage(tempCanvas, 0, 0);
         }
 
-        function update() {
+        function update(dt) {
             if (gameState !== 'PLAY') return;
 
-            player.update();
-            enemies.forEach(e => e.update(player));
+            player.update(dt);
+            enemies.forEach(e => e.update(player, dt));
 
             // Item/Trigger collision
             const tx = Math.floor(player.getCenter().x / TILE_SIZE);
@@ -639,8 +644,13 @@
             }
         }
 
-        function gameLoop() {
-            update();
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            update(deltaTime);
             draw();
             requestAnimationFrame(gameLoop);
         }
