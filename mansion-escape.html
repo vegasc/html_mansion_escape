@@ -157,7 +157,8 @@
         // Assets / Colors
         const IMAGES = {
             PLAYER: new Image(),
-            ENEMY: new Image()
+            ENEMY: new Image(),
+            FLOOR: new Image()
         };
 
         const COLORS = {
@@ -507,6 +508,17 @@
             for (let y = 0; y < GRID_HEIGHT; y++) {
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     const tile = map[y][x];
+
+                    // Draw Floor for all non-wall tiles (or everywhere as background)
+                    if (tile !== 1) {
+                        if (IMAGES.FLOOR.complete) {
+                            ctx.drawImage(IMAGES.FLOOR, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        } else {
+                            ctx.fillStyle = COLORS.FLOOR;
+                            ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        }
+                    }
+
                     if (tile === 1) {
                         ctx.fillStyle = COLORS.WALL;
                         ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -697,7 +709,7 @@
         function loadAssets() {
             return new Promise((resolve) => {
                 let loaded = 0;
-                const total = 2;
+                const total = 3;
 
                 function checkLoaded() {
                     loaded++;
@@ -711,6 +723,10 @@
                 IMAGES.ENEMY.src = 'assets/enemy.png';
                 IMAGES.ENEMY.onload = checkLoaded;
                 IMAGES.ENEMY.onerror = () => { console.error("Failed to load enemy.png"); checkLoaded(); };
+
+                IMAGES.FLOOR.src = 'assets/floor.jpg';
+                IMAGES.FLOOR.onload = checkLoaded;
+                IMAGES.FLOOR.onerror = () => { console.error("Failed to load floor.jpg"); checkLoaded(); };
             });
         }
 
