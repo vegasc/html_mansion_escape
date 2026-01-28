@@ -186,7 +186,8 @@
         let lightRadiusDefault = 150;
         let lightRadius = lightRadiusDefault;
         let enemyVisionRadius = 270;
-        let etitySpeed = 250;
+        let entitySpeed = 250;
+        let enemySpeed = 252;
 
         const FLOORS = [
             { name: "ATTIC", difficulty: 1 },
@@ -209,7 +210,7 @@
                 this.height = TILE_SIZE * 0.7;
                 this.color = color;
                 this.image = image;
-                this.speed = etitySpeed;
+                this.speed = entitySpeed;
             }
 
             draw() {
@@ -292,6 +293,7 @@
             constructor(x, y, speed) {
                 super(x, y, COLORS.ENEMY, IMAGES.ENEMY);
                 this.alertLevel = 0;
+                this.speed = enemySpeed;
             }
 
             update(target, dt) {
