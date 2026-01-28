@@ -505,30 +505,43 @@
         }
 
         function drawMap() {
+            if (!player) return; // Need player for distance check
+            const playerPos = player.getCenter();
+
             for (let y = 0; y < GRID_HEIGHT; y++) {
                 for (let x = 0; x < GRID_WIDTH; x++) {
                     const tile = map[y][x];
 
+                    const tileX = x * TILE_SIZE;
+                    const tileY = y * TILE_SIZE;
+                    const cx = tileX + TILE_SIZE / 2;
+                    const cy = tileY + TILE_SIZE / 2;
+
+                    const dist = Math.sqrt((cx - playerPos.x) ** 2 + (cy - playerPos.y) ** 2);
+
+                    // Only draw if within light radius (plus buffer)
+                    if (dist > lightRadius + 40) continue;
+
                     // Draw Floor for all non-wall tiles (or everywhere as background)
                     if (tile !== 1) {
                         if (IMAGES.FLOOR.complete) {
-                            ctx.drawImage(IMAGES.FLOOR, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                            ctx.drawImage(IMAGES.FLOOR, tileX, tileY, TILE_SIZE, TILE_SIZE);
                         } else {
                             ctx.fillStyle = COLORS.FLOOR;
-                            ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                            ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
                         }
                     }
 
                     if (tile === 1) {
                         ctx.fillStyle = COLORS.WALL;
-                        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
                         ctx.strokeStyle = '#334';
-                        ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
                     } else if (tile === 4) {
                         ctx.fillStyle = COLORS.EXIT;
-                        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
                         ctx.fillStyle = '#000';
-                        ctx.fillText('EXIT', x * TILE_SIZE + 8, y * TILE_SIZE + 25);
+                        ctx.fillText('EXIT', tileX + 8, tileY + 25);
                     }
                 }
             }
@@ -541,22 +554,24 @@
             items.forEach(item => {
                 const x = item.x * TILE_SIZE;
                 const y = item.y * TILE_SIZE;
+                const cx = x + TILE_SIZE / 2;
+                const cy = y + TILE_SIZE / 2;
+
+                // Calculate distance to player
+                const dist = Math.sqrt((cx - playerPos.x) ** 2 + (cy - playerPos.y) ** 2);
+
+                // Only draw if within light radius (plus small buffer for smooth fade-in)
+                if (dist > lightRadius + 30) return;
 
                 if (item.type === 'KEY') {
-                    const cx = x + TILE_SIZE / 2;
-                    const cy = y + TILE_SIZE / 2;
-                    const dist = Math.sqrt((cx - playerPos.x) ** 2 + (cy - playerPos.y) ** 2);
-
-                    if (dist <= lightRadius + 10) {
-                        ctx.fillStyle = COLORS.KEY;
-                        ctx.beginPath();
-                        ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
+                    ctx.fillStyle = COLORS.KEY;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+                    ctx.fill();
                 } else if (item.type === 'COIN') {
                     ctx.fillStyle = '#aaa';
                     ctx.beginPath();
-                    ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, 6, 0, Math.PI * 2);
+                    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
                     ctx.fill();
                 } else if (item.type === 'FLASHLIGHT') {
                     ctx.font = '30px Arial';
@@ -580,8 +595,8 @@
             tempCanvas.height = canvas.height;
             const tempCtx = tempCanvas.getContext('2d');
 
-            // Fill with darkness
-            tempCtx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            // Fill with darkness (100% opacity now)
+            tempCtx.fillStyle = 'rgba(0, 0, 0, 1)';
             tempCtx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Cut out light around player
