@@ -365,6 +365,20 @@
             return newMap;
         }
 
+        function getRandomEmptyTile() {
+            let x, y, tile;
+            let attempts = 0;
+            do {
+                x = Math.floor(Math.random() * (GRID_WIDTH - 2)) + 1;
+                y = Math.floor(Math.random() * (GRID_HEIGHT - 2)) + 1;
+                tile = map[y][x];
+                attempts++;
+                // Safety break to prevent infinite loops if map is full (unlikely here)
+                if (attempts > 100) return { x: 1, y: 1 };
+            } while (tile !== 0 || (x === 2 && y === 2)); // Avoid walls and player start pos
+            return { x, y };
+        }
+
         function initFloor(floorIndex) {
             currentFloor = floorIndex;
             map = generateMap(floorIndex);
@@ -373,30 +387,42 @@
 
             enemies = [];
 
+            let enemyPos = getRandomEmptyTile();
             if (floorIndex === 0) {
-                enemies.push(new Enemy(GRID_WIDTH - 5, 5, 1.2 + floorIndex * 0.2));
+                // Ensure enemy is far enough from player start
+                while (Math.abs(enemyPos.x - 2) < 5 && Math.abs(enemyPos.y - 2) < 5) {
+                    enemyPos = getRandomEmptyTile();
+                }
+                enemies.push(new Enemy(enemyPos.x, enemyPos.y, 1.2 + floorIndex * 0.2));
             } else {
-                // Starting Level 2 (index 1), only Ghost Enemy appears
-                enemies.push(new GhostEnemy(GRID_WIDTH - 5, 5, 1.2 + floorIndex * 0.2));
+                while (Math.abs(enemyPos.x - 2) < 5 && Math.abs(enemyPos.y - 2) < 5) {
+                    enemyPos = getRandomEmptyTile();
+                }
+                enemies.push(new GhostEnemy(enemyPos.x, enemyPos.y, 1.2 + floorIndex * 0.2));
             }
 
             items = [];
             // Random Keys
-            items.push({ x: Math.floor(Math.random() * 10) + 5, y: Math.floor(Math.random() * 10) + 1, type: 'KEY' });
+            const keyPos = getRandomEmptyTile();
+            items.push({ x: keyPos.x, y: keyPos.y, type: 'KEY' });
 
             // Random Score Items
             for (let i = 0; i < 3; i++) {
-                items.push({ x: Math.floor(Math.random() * 18) + 1, y: Math.floor(Math.random() * 13) + 1, type: 'COIN' });
+                const coinPos = getRandomEmptyTile();
+                items.push({ x: coinPos.x, y: coinPos.y, type: 'COIN' });
             }
 
             // Flashlight (chance to spawn)
             if (Math.random() > 0.5) {
-                items.push({ x: Math.floor(Math.random() * 18) + 1, y: Math.floor(Math.random() * 13) + 1, type: 'FLASHLIGHT' });
+                const flashPos = getRandomEmptyTile();
+                items.push({ x: flashPos.x, y: flashPos.y, type: 'FLASHLIGHT' });
             }
 
             // Hiding spots
-            items.push({ x: 5, y: 5, type: 'CLOSET' });
-            items.push({ x: 15, y: 10, type: 'CLOSET' });
+            for (let i = 0; i < 2; i++) {
+                const closetPos = getRandomEmptyTile();
+                items.push({ x: closetPos.x, y: closetPos.y, type: 'CLOSET' });
+            }
 
             floorNameEl.textContent = FLOORS[floorIndex].name;
             keysCountEl.textContent = player.keys;
