@@ -406,17 +406,38 @@
                     }
                 }
 
+                // Determine Random Exit Position on the edges (excluding corners)
+                let exitX, exitY;
+                let validExit = false;
+                while (!validExit) {
+                    const side = Math.floor(Math.random() * 4); // 0: Top, 1: Right, 2: Bottom, 3: Left
+                    if (side === 0) { // Top
+                        exitX = Math.floor(Math.random() * (GRID_WIDTH - 2)) + 1;
+                        exitY = 1;
+                    } else if (side === 1) { // Right
+                        exitX = GRID_WIDTH - 2;
+                        exitY = Math.floor(Math.random() * (GRID_HEIGHT - 2)) + 1;
+                    } else if (side === 2) { // Bottom
+                        exitX = Math.floor(Math.random() * (GRID_WIDTH - 2)) + 1;
+                        exitY = GRID_HEIGHT - 2;
+                    } else { // Left
+                        exitX = 1;
+                        exitY = Math.floor(Math.random() * (GRID_HEIGHT - 2)) + 1;
+                    }
+
+                    // Ensure not too close to start (2, 2)
+                    const dist = Math.abs(exitX - 2) + Math.abs(exitY - 2);
+                    if (dist > 20) validExit = true;
+                }
+
                 // Simple procedurally generated obstacles (just random walls for now)
                 for (let i = 0; i < 15 + floorIndex * 5; i++) {
                     const rx = Math.floor(Math.random() * (GRID_WIDTH - 2)) + 1;
                     const ry = Math.floor(Math.random() * (GRID_HEIGHT - 2)) + 1;
-                    if ((rx === 2 && ry === 2) || (rx === GRID_WIDTH - 3 && ry === GRID_HEIGHT - 3)) continue;
+                    if ((rx === 2 && ry === 2) || (rx === exitX && ry === exitY)) continue;
                     newMap[ry][rx] = 1;
                 }
 
-                // Place Exit (Stairs down)
-                const exitX = GRID_WIDTH - 2;
-                const exitY = GRID_HEIGHT - 2;
                 newMap[exitY][exitX] = 4; // Exit
 
                 // Validate Path from Player Start (2,2) to Exit
